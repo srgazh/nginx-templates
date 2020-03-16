@@ -78,7 +78,5 @@ server {
         include %home%/%user%/web/%domain%/stats/auth.conf*;
     }
 
-    include     /etc/nginx/conf.d/phpmyadmin.inc*;
-    include     /etc/nginx/conf.d/phppgadmin.inc*;
     include     %home%/%user%/conf/web/%domain%/nginx.conf_*;
 }

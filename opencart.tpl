@@ -50,7 +50,5 @@ server {
         return  404;
     }
 
-    include     /etc/nginx/conf.d/phpmyadmin.inc*;
-    include     /etc/nginx/conf.d/phppgadmin.inc*;
     include     %home%/%user%/conf/web/%domain%/nginx.conf_*;
 }

@@ -9,37 +9,40 @@ server {
         
     include %home%/%user%/conf/web/%domain%/nginx.forcessl.conf*;
     
-    proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
-    proxy_redirect          off;
+    location = /favicon.ico {
+        log_not_found off;
+        access_log off;
+    }
 
-    proxy_set_header X-Forwarded-Host $host;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_set_header X-Real-IP $remote_addr;
-
-    proxy_connect_timeout   720;
-    proxy_send_timeout      720;
-    proxy_read_timeout      720;
-    send_timeout            720;
-
-    # Allow "Well-Known URIs" as per RFC 5785
-    location ~* ^/.well-known/ {
+    location = /robots.txt {
         allow all;
+        log_not_found off;
+        access_log off;
     }
 
     location / {
-        proxy_pass http://127.0.0.1:8069;
-    }
+        try_files $uri $uri/ /index.php?$args;
+        
+        if (!-e $request_filename)
+        {
+            rewrite ^(.+)$ /index.php?q=$1 last;
+        }
 
-    location /longpolling {
-        proxy_pass http://127.0.0.1:8072;
-    }
-    
-    location ~* /web/static/ {
-        proxy_cache_valid 200 60m;
-        proxy_buffering on;
-        expires 864000;
-        proxy_pass http://127.0.0.1:8069;
+        location ~* ^.+\.(jpeg|jpg|png|gif|bmp|ico|svg|css|js)$ {
+            expires     max;
+            fastcgi_hide_header "Set-Cookie";
+        }
+
+        location ~ [^/]\.php(/|$) {
+            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+            if (!-f $document_root$fastcgi_script_name) {
+                return  404;
+            }
+
+            fastcgi_pass    %backend_lsnr%;
+            fastcgi_index   index.php;
+            include         /etc/nginx/fastcgi_params;
+        }
     }
 
     location /error/ {
